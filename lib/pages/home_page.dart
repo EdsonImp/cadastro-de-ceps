@@ -62,7 +62,7 @@ class _HomePageState extends State<HomePage> {
       } else {
         setState(() {
           erro = '';
-          endereco = Endereco(data['logradouro'], int.parse(cepController.text), data['bairro'], data['uf'], data['localidade']);
+          endereco = Endereco(data['objectId'],data['logradouro'], int.parse(cepController.text), data['bairro'], data['uf'], data['localidade']);
 
         });
 

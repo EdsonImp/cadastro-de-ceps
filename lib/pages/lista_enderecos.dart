@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import '../model/endereco_model.dart';
+import '../repositories/cep_repositories.dart';
 
 class ListaEnderecos extends StatefulWidget {
   const ListaEnderecos({super.key});
@@ -15,6 +16,7 @@ class _ListaEnderecosState extends State<ListaEnderecos> {
   @override
   List<dynamic> enderecos = [];
   bool pesquisa = false;
+  var repository = CepRepositories();
 
   void setPesquisa(){
     setState(() {
@@ -60,7 +62,7 @@ class _ListaEnderecosState extends State<ListaEnderecos> {
       } else  {
          setState(() {
           erro = '';
-          endereco = Endereco(data['logradouro'], int.parse(cepController.text), data['bairro'], data['uf'], data['localidade']);
+          endereco = Endereco(data['objectId'], data['logradouro'], int.parse(cepController.text), data['bairro'], data['uf'], data['localidade']);
           //endereco = 'Endereço: ${data['logradouro']}, Bairro: ${data['bairro']}, Cidade:  ${data['localidade']} - ${data['uf']}';
         });
 
@@ -160,9 +162,11 @@ class _ListaEnderecosState extends State<ListaEnderecos> {
                     (endereco != null)? ElevatedButton(onPressed: (){
                       var verifica = cepExisteNaLista(int.parse(cepController.text), enderecos);
                        if(!verifica){
-                        salvaEndereco();
+                         setState(() {
+                           salvaEndereco();
+                           _carregarEnderecos();
+                         });
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('CEP ${cepController.text} Salvo' )));
-                        _carregarEnderecos();
                         }else{
                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('CEP ${cepController.text} já cadastrado' )));
                        }
@@ -180,10 +184,20 @@ class _ListaEnderecosState extends State<ListaEnderecos> {
                 shrinkWrap: true,
                 itemCount: enderecos.length,
                 itemBuilder: (BuildContext context, int index) {
+                  var keyDi =  enderecos[index]['cep'].toString();
                   return Card(
-                    child: ListTile(
-                      title: Text('${enderecos[index]['logradouro']}\nCEP:  ${enderecos[index]['cep'].toString()}\nCidade: ${enderecos[index]['cidade']}-${enderecos[index]['uf']}'),
+                    child: Dismissible(
+                      key: Key(keyDi),
+                      onDismissed: (DismissDirection dismissDirection) async {
+                        print(enderecos[index]['objectId'].toString());
+                      await repository.deleteCep(enderecos[index]['objectId'].toString());
 
+                      },
+                      background: Container(color:Colors.red),
+                      child: ListTile(
+                        title: Text('${enderecos[index]['logradouro']}\nCEP:  ${enderecos[index]['cep'].toString()}\nCidade: ${enderecos[index]['cidade']}-${enderecos[index]['uf']}'),
+
+                      ),
                     ),
                   );
                 },
