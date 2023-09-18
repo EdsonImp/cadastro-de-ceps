@@ -51,8 +51,8 @@ class _HomePageState extends State<HomePage> {
   Future<void> consultarCEP(String cep) async {
     final response = await http.get(Uri.parse('https://viacep.com.br/ws/$cep/json/'));
 
-    if (response.statusCode == 200) {
-      Map<String, dynamic> data = json.decode(response.body);
+    if (response.statusCode == 200)  {
+      Map<String, dynamic> data =  json.decode(response.body);
       if (data.containsKey('erro')) {
         setState(() {
           erro = 'CEP não encontrado';
@@ -63,7 +63,7 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           erro = '';
           endereco = Endereco(data['logradouro'], int.parse(cepController.text), data['bairro'], data['uf'], data['localidade']);
-          //endereco = 'Endereço: ${data['logradouro']}, Bairro: ${data['bairro']}, Cidade:  ${data['localidade']} - ${data['uf']}';
+
         });
 
       }

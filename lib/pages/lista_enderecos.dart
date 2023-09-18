@@ -14,10 +14,21 @@ class ListaEnderecos extends StatefulWidget {
 class _ListaEnderecosState extends State<ListaEnderecos> {
   @override
   List<dynamic> enderecos = [];
+  bool pesquisa = false;
 
+  void setPesquisa(){
+    setState(() {
+      cepController.clear();
+      endereco = null;
+    });
+
+      if (pesquisa == false){
+      pesquisa = true;
+    }else pesquisa = false;
+  }
   var endereco;
   String erro = '';
-  final TextEditingController cepController = TextEditingController();
+   TextEditingController cepController = TextEditingController();
 
   @override
   void initState() {
@@ -110,78 +121,77 @@ class _ListaEnderecosState extends State<ListaEnderecos> {
 
     return Scaffold(
       appBar: AppBar(
+        title: Text("Minha lista de endereços"),
         actions: [
           IconButton(onPressed: (){
-            showDialog(context: context, builder: (BuildContext bc){
-              return AlertDialog(
-                content: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: <Widget>[
-                      TextField(
-                        controller: cepController,
-                        keyboardType: TextInputType.number,
-                        maxLength: 8,
-                        decoration: InputDecoration(
-                          labelText: 'CEP',
-                          hintText: 'Informe o CEP (apenas números)',
-                          errorText: erro,
-                        ),
-                      ),
-                      const SizedBox(height: 16.0),
-                      ElevatedButton(
-                        onPressed: () {
-                          validarCEP(cepController.text);
-                        },
-                        child: const Text('Consultar'),
-                      ),
-                      const SizedBox(height: 16.0),
-                      if (endereco != null)
-                        Card(
-                        color: Colors.orange.shade100,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            children: [
-                               Text(
-                                endereco.toString(),
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              IconButton(onPressed: (){
-                                var exist = cepExisteNaLista(int.parse(cepController.text),enderecos);
-                                 if (exist == false){print("o cep nao foi cadastrado ainda");}  else print("CEP já cadastrado");
-                              }, icon: const Icon(Icons.add_circle))
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              );
-            }
-            );
-
-          }, icon: Icon(Icons.add))
+            setState(() {
+              setPesquisa();
+            });
+          }, icon: Icon(Icons.search))
         ],
-        title: Text("Minha lista de endereços"),
         centerTitle: true,
       ),
       body:enderecos.isEmpty
           ? const Center(
         child: CircularProgressIndicator(),
-      ) :  ListView.builder(
-        itemCount: enderecos.length,
-        itemBuilder: (BuildContext context, int index) {
-          return Card(
-            child: ListTile(
-              title: Text('${enderecos[index]['logradouro']}\nCEP:  ${enderecos[index]['cep'].toString()}\nCidade: ${enderecos[index]['cidade']}-${enderecos[index]['uf']}'),
+      ) :  Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Column(
+          children: [
+            if (pesquisa)Expanded(
+              flex: 6,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    TextField(
+                          controller: cepController,
+                          keyboardType: TextInputType.number,
+                          maxLength: 12,
+                          decoration: InputDecoration(
+                            labelText: 'CEP',
+                            hintText: 'Informe o CEP (apenas números)',
+                            errorText: erro,
+                          ),
+                        ),
+                    ElevatedButton(onPressed: (){
+                      validarCEP(cepController.text);
+                    }, child: const Text("Buscar")),
+                    (endereco == null)?const Text("") : Text('$endereco'),
+                    (endereco != null)? ElevatedButton(onPressed: (){
+                      var verifica = cepExisteNaLista(int.parse(cepController.text), enderecos);
+                       if(!verifica){
+                        salvaEndereco();
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('CEP ${cepController.text} Salvo' )));
+                        _carregarEnderecos();
+                        }else{
+                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('CEP ${cepController.text} já cadastrado' )));
+                       }
+
+                }, child: const Text("Salvar CEP")) : const Text(""),
+                  ],
+                ),
+              ),
 
             ),
-          );
-        },
-      ),
+
+            Expanded(
+              flex: 12,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: enderecos.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return Card(
+                    child: ListTile(
+                      title: Text('${enderecos[index]['logradouro']}\nCEP:  ${enderecos[index]['cep'].toString()}\nCidade: ${enderecos[index]['cidade']}-${enderecos[index]['uf']}'),
+
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      )
     );
   }
 }
